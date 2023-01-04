@@ -3,6 +3,7 @@ using Nop.Core.Caching;
 
 namespace Nop.Plugin.Misc.AdvRedirect
 {
+    //test
     /// <summary>
     /// Represents plugin constants
     /// </summary>
