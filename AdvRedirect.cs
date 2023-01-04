@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Cms;
-using Nop.Plugin.Misc.AdvRedirect.Components;
 using Nop.Services.Cms;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Plugins;
-using Nop.Web.Framework.Infrastructure;
+
 
 namespace Nop.Plugin.Misc.AdvRedirect
 {   
@@ -32,12 +31,12 @@ namespace Nop.Plugin.Misc.AdvRedirect
 
         public Type GetWidgetViewComponent(string widgetZone)
         {
-            return typeof(WidgetsAdvRedirectViewComponent);
+            throw new NotImplementedException();
         }
 
         public Task<IList<string>> GetWidgetZonesAsync()
         {
-            return Task.FromResult<IList<string>>(new List<string> { PublicWidgetZones.Footer });
+            return Task.FromResult<IList<string>>(new List<string>());
         }
 
         public override string GetConfigurationPageUrl()
@@ -48,10 +47,10 @@ namespace Nop.Plugin.Misc.AdvRedirect
         public override async Task InstallAsync()
         {
             //locales
-            await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
-            {
-                ["Plugins.Misc.AdvRedirect.Fields.PhoneNumber"] = "Phone number"
-            });
+            //await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
+            //{
+            //    ["Plugins.Misc.AdvRedirect.Fields.PhoneNumber"] = "Phone number"
+            //});
 
             if (!_widgetSettings.ActiveWidgetSystemNames.Contains(AdvRedirectDefaults.SystemName))
             {

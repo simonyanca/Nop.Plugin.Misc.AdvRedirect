@@ -1,4 +1,5 @@
-﻿using Nop.Core.Configuration;
+﻿using System.Collections.Generic;
+using Nop.Core.Configuration;
 
 namespace Nop.Plugin.Misc.AdvRedirect
 {
@@ -7,6 +8,6 @@ namespace Nop.Plugin.Misc.AdvRedirect
     /// </summary>
     public class AdvRedirectSettings : ISettings
     {
-        public string PhoneNumber { get; set; }
+        public Dictionary<string, string> Redirections { get; set; } 
     }
 }
