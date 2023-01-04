@@ -2,9 +2,18 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Copyright>Copyright ©, Ltd</Copyright>
+    <Authors>Gerardo Tous</Authors>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <OutputPath>..\..\Presentation\Nop.Web\Plugins\Misc.AdvRedirect</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="PackageFiles\**" />
+    <EmbeddedResource Remove="PackageFiles\**" />
+    <None Remove="PackageFiles\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="logo.jpg" />
@@ -19,13 +28,26 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
+  
   <ItemGroup>
-    <ProjectReference Include="..\Presentation\Nop.Web\Nop.Web.csproj" />
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="PackageFiles\" />
+    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="logo.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+
+  <!-- This target execute after "Build" target -->
+  <Target Name="NopTarget" AfterTargets="Build">
+    <!-- Delete unnecessary libraries from plugins path -->
+    <MSBuild Projects="@(ClearPluginAssemblies)" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+  </Target>
 
 </Project>
