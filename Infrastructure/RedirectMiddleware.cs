@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Nop.Core;
+using Nop.Plugin.Misc.AdvRedirect.Services;
 using Nop.Services.Configuration;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
@@ -21,7 +22,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
     {
         #region Fields
 
-        private readonly AdvRedirectSettings _settings;
+        private readonly RedirectionsService _redirectionService;
         private readonly RequestDelegate _next;
         private readonly ISettingService _settingService;
         private readonly IStoreContext _storeContext;
@@ -29,11 +30,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
 
         #region Ctor
 
-        public RedirectMiddleware(IAuthenticationSchemeProvider schemes, AdvRedirectSettings settings, ISettingService settingService, IStoreContext storeContext, RequestDelegate next)
+        public RedirectMiddleware(IAuthenticationSchemeProvider schemes, RedirectionsService redirectionService, ISettingService settingService, IStoreContext storeContext, RequestDelegate next)
         {
             Schemes = schemes ?? throw new ArgumentNullException(nameof(schemes));
             _next = next ?? throw new ArgumentNullException(nameof(next));
-            _settings = settings;
+            _redirectionService = redirectionService;
             _settingService = settingService;
             _storeContext = storeContext;
 
@@ -61,20 +62,13 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         {
             if (context.Request.Method == "GET" )
             {
-                var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-                var settings = await _settingService.LoadSettingAsync<AdvRedirectSettings>(storeId);
-                
                 var newUrl = "";
-                if(settings.Redirections != null)
-                    settings.Redirections.TryGetValue(context.Request.Path.Value, out newUrl);
-
-                if (!string.IsNullOrEmpty(newUrl) && newUrl != context.Request.Path.Value)
+                if (_redirectionService.Redirections.TryGetValue(context.Request.Path.Value, out newUrl))
                 {
                     var parsed = HttpUtility.UrlEncode(newUrl);
                     if (parsed.StartsWith("%2f"))
-                    {
                         parsed = "/" + parsed.Substring(3);
-                    }
+
                     context.Request.Path = parsed;
                     context.Response.Redirect(parsed, true);
                 }

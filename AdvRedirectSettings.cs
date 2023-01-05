@@ -8,6 +8,6 @@ namespace Nop.Plugin.Misc.AdvRedirect
     /// </summary>
     public class AdvRedirectSettings : ISettings
     {
-        public Dictionary<string, string> Redirections { get; set; } 
+        
     }
 }

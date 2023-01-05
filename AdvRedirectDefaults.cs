@@ -13,6 +13,10 @@ namespace Nop.Plugin.Misc.AdvRedirect
         /// Gets a plugin system name
         /// </summary>
         public static string SystemName => "Misc.AdvRedirect";
+        public static string PrefixCacheKey => "Nop.Plugin.Misc.AdvRedirect";
+
+        public static CacheKey ConfigurationsCacheKey => new("Nop.Plugin.Misc.AdvRedirect.Configurations-{0}", PrefixCacheKey);
+        
 
     }
 }

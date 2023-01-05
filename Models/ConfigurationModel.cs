@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
@@ -9,9 +10,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Models
     /// </summary>
     public record ConfigurationModel : BaseNopModel
     {
+        public string Url { get; set; }
+        public string newUrl { get; set; }
+
         [Required]
-        [NopResourceDisplayName("Plugins.Misc.AdvRedirect.Fields.PhoneNumber")]
-        public string PhoneNumber { get; set; }
+        public Dictionary<string,string> Redirections { get; set; }
 
     }
 }

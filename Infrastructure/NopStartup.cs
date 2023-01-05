@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
+using Nop.Plugin.Misc.AdvRedirect.Services;
 using Nop.Services.Authentication;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
@@ -20,7 +21,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            
+            services.AddScoped<RedirectionsService>();
         }
     }
 }

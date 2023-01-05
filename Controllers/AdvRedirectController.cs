@@ -9,6 +9,7 @@ using Nop.Core;
 using Nop.Core.Caching;
 using Nop.Core.Domain.Messages;
 using Nop.Plugin.Misc.AdvRedirect.Models;
+using Nop.Plugin.Misc.AdvRedirect.Services;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
@@ -44,11 +45,14 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
         private readonly IStoreService _storeService;
         private readonly IWorkContext _workContext;
         private readonly MessageTemplatesSettings _messageTemplatesSettings;
+        private readonly RedirectionsService _redirectionsService;
         #endregion
 
         #region Ctor
 
-        public AdvRedirectController(IEmailAccountService emailAccountService,
+        public AdvRedirectController(
+             RedirectionsService redirectionsService,
+             IEmailAccountService emailAccountService,
              IGenericAttributeService genericAttributeService,
              ILocalizationService localizationService,
              ILogger logger,
@@ -71,6 +75,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
             _messageTokenProvider = messageTokenProvider;
             _notificationService = notificationService;
             _settingService = settingService;
+            _redirectionsService = redirectionsService;
             _staticCacheManager = staticCacheManager;
             _storeContext = storeContext;
             _storeMappingService = storeMappingService;
@@ -81,23 +86,13 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 
         #endregion
 
-        #region Utilities
-
-
-
-        #endregion
 
         #region Methods
 
-        private async Task PrepareModelAsync(ConfigurationModel model)
+        private async Task PrepareModel(ConfigurationModel model)
         {
-            //load settings for active store scope
-            var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-            var settings = await _settingService.LoadSettingAsync<AdvRedirectSettings>(storeId);
-            //whether plugin is configured
-            //if (string.IsNullOrEmpty(settings.PhoneNumber ))
-            //    return;
-            //model.PhoneNumber = settings.PhoneNumber;
+            model.Redirections = _redirectionsService.Redirections;
+            await Task.FromResult<bool>(true);
         }
 
         [AuthorizeAdmin]
@@ -105,9 +100,34 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
         public async Task<IActionResult> Configure()
         {
             var model = new ConfigurationModel();
-            await PrepareModelAsync(model);
+            await PrepareModel(model);
             return View("~/Plugins/Misc.AdvRedirect/Views/Configure.cshtml", model);
         }
+
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost, ActionName("RemoveRedirection")]
+        public async Task<IActionResult> RemoveRedirection(string url)
+        {
+            _redirectionsService.Redirections.Remove(url);
+            _redirectionsService.SaveAsync();
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
+            return await Configure();
+        }
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost, ActionName("AddRedirection")]
+        public async Task<IActionResult> AddRedirection(string url, string newUrl)
+        {
+            _redirectionsService.Redirections[url] = newUrl;
+            _redirectionsService.SaveAsync();
+            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
+            return await Configure();
+        }
+
+
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
@@ -118,14 +138,8 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
             if (!ModelState.IsValid)
                 return await Configure();
 
-            var storeId = await _storeContext.GetActiveStoreScopeConfigurationAsync();
-            var settings = await _settingService.LoadSettingAsync<AdvRedirectSettings>(storeId);
-
             //set API key
-            //settings.PhoneNumber = model.PhoneNumber;
-            //await _settingService.SaveSettingAsync(settings, settings => settings.PhoneNumber, clearCache: false);
-            await _settingService.ClearCacheAsync();
-
+            _redirectionsService.SaveAsync();
             
             _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
 
