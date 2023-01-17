@@ -1,10 +1,22 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using DocumentFormat.OpenXml.InkML;
+using DocumentFormat.OpenXml.Vml.Office;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
+using Microsoft.IdentityModel.Tokens;
 using Nop.Core;
+
+using Nop.Core.Caching;
+using Nop.Plugin.Misc.AdvRedirect.Models;
+using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Plugin.Misc.AdvRedirect.Services;
 using Nop.Services.Configuration;
 
@@ -24,20 +36,17 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
 
         private readonly RedirectionsService _redirectionService;
         private readonly RequestDelegate _next;
-        private readonly ISettingService _settingService;
-        private readonly IStoreContext _storeContext;
+        
+        
         #endregion
 
         #region Ctor
 
-        public RedirectMiddleware(IAuthenticationSchemeProvider schemes, RedirectionsService redirectionService, ISettingService settingService, IStoreContext storeContext, RequestDelegate next)
+        public RedirectMiddleware(IAuthenticationSchemeProvider schemes,  RedirectionsService redirectionService, RequestDelegate next)
         {
             Schemes = schemes ?? throw new ArgumentNullException(nameof(schemes));
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _redirectionService = redirectionService;
-            _settingService = settingService;
-            _storeContext = storeContext;
-
         }
 
         #endregion
@@ -62,10 +71,10 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         {
             if (context.Request.Method == "GET" )
             {
-                var newUrl = "";
-                if (_redirectionService.Redirections.TryGetValue(context.Request.Path.Value, out newUrl))
+                string redirectUrl = _redirectionService.ResolveRedirection(context.Request.Path.Value + context.Request.QueryString);
+                if (!redirectUrl.IsNullOrEmpty())
                 {
-                    var parsed = HttpUtility.UrlEncode(newUrl);
+                    var parsed = HttpUtility.UrlEncode(redirectUrl);
                     if (parsed.StartsWith("%2f"))
                         parsed = "/" + parsed.Substring(3);
 

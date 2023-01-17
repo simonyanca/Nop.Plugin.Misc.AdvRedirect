@@ -1,46 +1,161 @@
-﻿@using Nop.Plugin.Misc.AdvRedirect.Models;
+﻿@using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
+@using Nop.Web.Framework.Models.DataTables
 @model ConfigurationModel
-
-
 @{
-    Layout = "_ConfigurePlugin";
+	Layout = "_ConfigurePlugin";
 }
 
-<link rel="stylesheet" href="~/Plugins/Misc.AdvRedirect/Content/styles.css" />
+ <div class="content-header clearfix">
+	<div class="float-right">
+		<a  class="btn btn-primary">
+			<i class="fas fa-plus-square"></i>
+			@T("Admin.Common.AddNew")
+		</a>
+	</div>
+</div>
 
-<form asp-controller="AdvRedirect" asp-action="AddRedirection" method="post">
-	 <div class="form-group row">
-		<div class="col-md-3">
-			<nop-label asp-for="Url" />
+<div class="card card-default hide">
+	<div class="card-header">
+		@T("Admin.Common.AddNewRecord")
+	</div>
+	<div class="card-body">
+		<div class="form-group row">
+			<div class="col-md-3">
+				<nop-label asp-for="@Model.AddRedirection.Pattern" />
+			</div>
+			<div class="col-md-9">
+				<nop-editor asp-for="@Model.AddRedirection.Pattern" />
+				<span asp-validation-for="@Model.AddRedirection.Pattern"></span>
+			</div>
 		</div>
-		<div class="col-md-9">
-			<nop-editor asp-for="Url" />
-			<span asp-validation-for="Url"></span>
+		<div class="form-group row">
+			<div class="col-md-3">
+				<nop-label asp-for="@Model.AddRedirection.Type" />
+			</div>
+			<div class="col-md-9">
+				<nop-select asp-for="@Model.AddRedirection.Type" asp-items="@Model.AvailableTypes" />
+				<span asp-validation-for="@Model.AddRedirection.Type"></span>
+			</div>
+		</div>
+		<div class="form-group row">
+			<div class="col-md-3">
+				<nop-label asp-for="@Model.AddRedirection.RedirectUrl" />
+			</div>
+			<div class="col-md-9">
+				<nop-editor asp-for="@Model.AddRedirection.RedirectUrl" />
+				<span asp-validation-for="@Model.AddRedirection.RedirectUrl"></span>
+			</div>
+		</div>
+		
+		<div class="form-group row">
+			<div class="col-md-9 offset-md-3">
+				<button type="button" id="addRedirection" class="btn btn-primary">@T("Admin.Common.AddNew")</button>
+			</div>
 		</div>
 	</div>
-	<div class="form-group row">
-		<div class="col-md-3">
-			<nop-label asp-for="newUrl" />
-		</div>
-		<div class="col-md-9">
-			<nop-editor asp-for="newUrl" />
-			<span asp-validation-for="newUrl"></span>
-		</div>
-	</div>
-	 <div class="form-group row">
-		<div class="col-md-9 offset-md-3">
-			<button type="submit" name="save" class="btn btn-primary">@T("Admin.Common.Save")</button>
-		</div>
-	</div>
-</form>
-<br />
-<br />
-@foreach(var r in Model.Redirections)
+	<script>
+		$(document).ready(function () {
+			$('#addRedirection').click(function () {
+				$('#addRedirection').attr('disabled', true);
+				var postData = {
+					Pattern: $('#@Html.IdFor(model => model.AddRedirection.Pattern)').val(),
+					Type: $('#@Html.IdFor(model => model.AddRedirection.Type)').val(),
+					RedirectUrl: $('#@Html.IdFor(model => model.AddRedirection.RedirectUrl)').val()
+				};
+
+				addAntiForgeryToken(postData);
+
+				$.ajax({
+					cache: false,
+					type: 'POST',
+					url: '@Html.Raw(Url.Action("RedirectAdd", "AdvRedirect", null))',
+					data: postData,
+					success: function (data, textStatus, jqXHR) {
+						if (data.Result) {
+							$('#@Html.IdFor(model => model.AddRedirection.Pattern)').val('');
+							$('#@Html.IdFor(model => model.AddRedirection.Type)').val('0');
+							$('#@Html.IdFor(model => model.AddRedirection.RedirectUrl)').val('');
+							updateTable('#Redirections-grid');
+						} else {
+							display_nop_error(data);
+						}
+					},
+					complete: function (jqXHR, textStatus) {
+						$('#addRedirection').attr('disabled', false);
+					}
+				});
+			});
+		});
+	</script>
+</div>
+<script>
+	function renderColumnOrderStatus(data, type, row, meta) {
+		var color;
+		switch (data) {
+			case 0:
+				color = 'Match';
+				break;
+			case 1:
+				color = 'RegularExpresion';
+				break;
+			case 2:
+				color = 'Contains';
+				break;
+		}
+		return '<td data-columnname="RedirectUrl" class="sorting_1">' + color + '</td>';
+	}
+</script>
+
+@await Html.PartialAsync("Table", new DataTablesModel
 {
-	<div>@(r.Key + "-" + r.Value)</div>
-	<form asp-controller="AdvRedirect" asp-action="RemoveRedirection" method="post">
-		<input type="hidden" value="@r.Key" name="url">
-		<button type="submit"  class="btn btn-primary">@T("Admin.Common.Remove")</button>
-	</form>
-	<br />
-}
+    Name = "Redirections-grid",
+    UrlRead = new DataUrl("GetRedirections", "AdvRedirect"),
+	UrlUpdate = new DataUrl("RedirectUpdate", "AdvRedirect"),
+	UrlDelete = new DataUrl("RedirectRemove", "AdvRedirect"),
+	Processing = true,
+	PrimaryKeyColumn = nameof(RedirectionModel.Id),
+	Paging = true,
+	Ordering = true,
+	Info = false,
+	Length = Model.SearchModel.PageSize,
+	LengthMenu = Model.SearchModel.AvailablePageSizes,
+	//ServerSide = false,
+	Filters = new List<FilterParameter>
+    {
+        new FilterParameter(nameof(RedirectionModel.Pattern)),
+        new FilterParameter(nameof(RedirectionModel.RedirectUrl))
+    },
+    ColumnCollection = new List<ColumnProperty>
+    {
+		new ColumnProperty(nameof(RedirectionModel.Id))
+        {
+            Title = "Id",
+			Visible = false
+        },
+        new ColumnProperty(nameof(RedirectionModel.Pattern))
+        {
+            Title = "Url",
+            Width = "300",
+			EditType = EditType.String,
+        },
+		new ColumnProperty(nameof(RedirectionModel.Type))
+        {
+            Title = "Redirect type",
+			Render = new RenderCustom("renderColumnOrderStatus")
+        },
+        new ColumnProperty(nameof(RedirectionModel.RedirectUrl))
+        {
+            Title = "Redirect Url",
+            Width = "300",
+			EditType = EditType.String,
+        },
+		new ColumnProperty(nameof(RedirectionModel.Id))
+		{
+            Title = T("Admin.Common.Delete").Text,
+            Width = "100",
+			Searchable = false,
+            Render = new RenderButtonRemove(T("Admin.Common.Delete").Text),
+            ClassName = NopColumnClassDefaults.Button
+        }
+    }
+})

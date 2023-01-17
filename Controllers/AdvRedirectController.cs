@@ -1,87 +1,41 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Core;
-using Nop.Core.Caching;
-using Nop.Core.Domain.Messages;
 using Nop.Plugin.Misc.AdvRedirect.Models;
+using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Plugin.Misc.AdvRedirect.Services;
-using Nop.Services.Common;
-using Nop.Services.Configuration;
-using Nop.Services.Localization;
-using Nop.Services.Logging;
-using Nop.Services.Messages;
-using Nop.Services.Stores;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
-using Nop.Web.Framework.Models;
-using Nop.Web.Framework.Models.Extensions;
-using Nop.Web.Framework.Mvc;
+using Nop.Web.Framework.Models.DataTables;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Mvc.ModelBinding;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Services.Messages;
+using Microsoft.IdentityModel.Tokens;
+using System.Threading.Tasks;
+using Nop.Core.Domain.Messages;
+using Nop.Web.Framework.Models.Extensions;
+using Nop.Plugin.Tax.Avalara.Models.Log;
+using Nop.Plugin.Misc.AdvRedirect.Entity;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {
     [AutoValidateAntiforgeryToken]
     public class AdvRedirectController : BasePluginController
     {
+        private readonly INotificationService _notificationService;
 
         #region Fields
-        private readonly IEmailAccountService _emailAccountService;
-        private readonly IGenericAttributeService _genericAttributeService;
-        private readonly ILocalizationService _localizationService;
-        private readonly ILogger _logger;
-        private readonly IMessageTemplateService _messageTemplateService;
-        private readonly IMessageTokenProvider _messageTokenProvider;
-        private readonly INotificationService _notificationService;
-        private readonly ISettingService _settingService;
-        private readonly IStaticCacheManager _staticCacheManager;
-        private readonly IStoreContext _storeContext;
-        private readonly IStoreMappingService _storeMappingService;
-        private readonly IStoreService _storeService;
-        private readonly IWorkContext _workContext;
-        private readonly MessageTemplatesSettings _messageTemplatesSettings;
         private readonly RedirectionsService _redirectionsService;
         #endregion
 
         #region Ctor
 
-        public AdvRedirectController(
-             RedirectionsService redirectionsService,
-             IEmailAccountService emailAccountService,
-             IGenericAttributeService genericAttributeService,
-             ILocalizationService localizationService,
-             ILogger logger,
-             IMessageTemplateService messageTemplateService,
-             IMessageTokenProvider messageTokenProvider,
-             INotificationService notificationService,
-             ISettingService settingService,
-             IStaticCacheManager staticCacheManager,
-             IStoreContext storeContext,
-             IStoreMappingService storeMappingService,
-             IStoreService storeService,
-             IWorkContext workContext,
-             MessageTemplatesSettings messageTemplatesSettings)
+        public AdvRedirectController(RedirectionsService redirectionsService, INotificationService notificationService)
         {
-            _emailAccountService = emailAccountService;
-            _genericAttributeService = genericAttributeService;
-            _localizationService = localizationService;
-            _logger = logger;
-            _messageTemplateService = messageTemplateService;
-            _messageTokenProvider = messageTokenProvider;
-            _notificationService = notificationService;
-            _settingService = settingService;
             _redirectionsService = redirectionsService;
-            _staticCacheManager = staticCacheManager;
-            _storeContext = storeContext;
-            _storeMappingService = storeMappingService;
-            _storeService = storeService;
-            _workContext = workContext;
-            _messageTemplatesSettings = messageTemplatesSettings;
+            _notificationService = notificationService;
         }
 
         #endregion
@@ -89,61 +43,86 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 
         #region Methods
 
-        private async Task PrepareModel(ConfigurationModel model)
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost, ActionName("GetRedirections")]
+        public async Task<IActionResult> GetRedirections(RedirectionSearchModel searchModel)
         {
-            model.Redirections = _redirectionsService.Redirections;
-            await Task.FromResult<bool>(true);
+            var data = (await _redirectionsService.GetAsync(searchModel)).AsQueryable();
+
+            if(searchModel.order.Any())
+                if (searchModel.order[0].dir == "asc")
+                    data = data.OrderBy(a => a.GetType().GetProperty(searchModel.Columns[searchModel.order[0].column].data).GetValue(a, null));
+                else
+                    data = data.OrderByDescending(a => a.GetType().GetProperty(searchModel.Columns[searchModel.order[0].column].data).GetValue(a, null));
+
+            var paged = await data.ToPagedListAsync(searchModel.Page - 1, searchModel.PageSize);
+
+            var model = new RedirectionsListModel().PrepareToGrid(searchModel, paged,  () =>
+            {
+                return paged.Select(l => l.ToModel<RedirectionModel>());
+            });
+
+            return Json(model);
+        }
+
+      
+
+        [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost, ActionName("RedirectAdd")]
+        public async Task<IActionResult> RedirectAdd(RedirectionModel model)
+        {
+            if (!ModelState.IsValid)
+                return ErrorJson(ModelState.SerializeErrors());
+            string errors = await _redirectionsService.AddRedirectionRuleAsync(model.ToEntity<RedirectionRuleEntity>());
+            if (!errors.IsNullOrEmpty())
+                return ErrorJson($"{errors}");
+            else
+                _redirectionsService.SaveAsync();
+
+            return Json(new { Result = errors.IsNullOrEmpty() });
         }
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        public async Task<IActionResult> Configure()
+        public IActionResult Configure()
         {
-            var model = new ConfigurationModel();
-            await PrepareModel(model);
-            return View("~/Plugins/Misc.AdvRedirect/Views/Configure.cshtml", model);
+            ConfigurationModel model = new ConfigurationModel()
+            {
+                SearchModel = new RedirectionSearchModel() { AvailablePageSizes = "10,20,30" }
+            };
+
+            foreach (RedirectionTypeEnum r in (RedirectionTypeEnum[])Enum.GetValues(typeof(RedirectionTypeEnum)))
+            {
+                model.AvailableTypes.Add(new SelectListItem() { Text = r.ToString(), Selected = !model.AvailableTypes.Any(), Value = r.ToString() });
+            }
+            
+            return View("~/Plugins/Misc.AdvRedirect/Views/Configure.cshtml", model); 
         }
 
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
-        [HttpPost, ActionName("RemoveRedirection")]
-        public async Task<IActionResult> RemoveRedirection(string url)
+        [HttpPost, ActionName("RedirectRemove")]
+        public IActionResult RedirectRemove(RedirectionModel model)
         {
-            _redirectionsService.Redirections.Remove(url);
+            _redirectionsService.RemoveRedirection(model.Id);
             _redirectionsService.SaveAsync();
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
-            return await Configure();
+            return Json(new { Result = true });
         }
-
-        [AuthorizeAdmin]
-        [Area(AreaNames.Admin)]
-        [HttpPost, ActionName("AddRedirection")]
-        public async Task<IActionResult> AddRedirection(string url, string newUrl)
-        {
-            _redirectionsService.Redirections[url] = newUrl;
-            _redirectionsService.SaveAsync();
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
-            return await Configure();
-        }
-
 
 
         [AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost, ActionName("Configure")]
         [FormValueRequired("save")]
-        public async Task<IActionResult> Configure(ConfigurationModel model)
+        public IActionResult Configure(ConfigurationModel model)
         {
             if (!ModelState.IsValid)
-                return await Configure();
+                return  Configure();
 
-            //set API key
-            _redirectionsService.SaveAsync();
-            
-            _notificationService.SuccessNotification(await _localizationService.GetResourceAsync("Admin.Plugins.Saved"));
-
-            return await Configure();
+            return Configure();
         }
 
         #endregion

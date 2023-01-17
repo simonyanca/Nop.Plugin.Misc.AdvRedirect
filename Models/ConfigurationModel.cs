@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
 
@@ -10,11 +12,16 @@ namespace Nop.Plugin.Misc.AdvRedirect.Models
     /// </summary>
     public record ConfigurationModel : BaseNopModel
     {
-        public string Url { get; set; }
-        public string newUrl { get; set; }
+        public ConfigurationModel()
+        {
+            AvailableTypes = new List<SelectListItem>();
+            SearchModel = new RedirectionSearchModel();
+        }
 
-        [Required]
-        public Dictionary<string,string> Redirections { get; set; }
+        public RedirectionSearchModel SearchModel { get; set; }
 
+        public RedirectionModel AddRedirection { get; set; }
+
+        public IList<SelectListItem> AvailableTypes { get; set; }
     }
 }
