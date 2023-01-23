@@ -91,11 +91,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
 
         public async Task<string> ResolveRedirection(HttpRequest request)
         {
-            //var rules = await GetAllRulesAsync();
+            var rules = await GetAllRulesAsync();
 
-            //IRule rule = rules.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
-            //if (rule != null)
-            //    return rule.RedirectUrl;
+            IRule rule = rules.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
+            if (rule != null)
+                return rule.RedirectUrl;
 
             return null;
         }
@@ -125,11 +125,12 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
         }
 
         public async Task<string> InsertRedirectionsAsync(RedirectionRule ent)
-        { 
+        {
+            var store = await _storeContext.GetCurrentStoreAsync();
             switch ((RedirectionTypeEnum)ent.Type)
             {
                 case RedirectionTypeEnum.Match:
-                    var store = await _storeContext.GetCurrentStoreAsync();
+                    
                     if (_redirectionRuleEntityRepository.Table.Any(r => r.StoreId == store.Id && r.Type == (int)RedirectionTypeEnum.Match && r.Pattern == ent.Pattern))
                         return "Redirección ya existe";
 
@@ -143,6 +144,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
             }
 
             ent.UseQueryString = ent.Type == (int)RedirectionTypeEnum.Match && ent.Pattern.Contains("?") ? true : ent.UseQueryString;
+            ent.StoreId = store.Id;
             await _redirectionRuleEntityRepository.InsertAsync(ent);
             
             return null;
