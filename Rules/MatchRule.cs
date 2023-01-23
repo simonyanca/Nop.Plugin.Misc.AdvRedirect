@@ -9,12 +9,14 @@ namespace Nop.Plugin.Misc.AdvRedirect.Rules
     public class MatchRule : IRule
     {
         private string _matchUrl;
+        private bool _useQryString;
         private string _redirectUrl;
 
-        public MatchRule(string url, string redirectUrl)
+        public MatchRule(string url, string redirectUrl, bool useQryString)
         {
             _redirectUrl = redirectUrl;
             _matchUrl = url;
+            _useQryString = useQryString;
         }
 
 
@@ -26,9 +28,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Rules
             }
         }
 
-        public bool Match(string url)
+        
+        public bool Match(string url, string qry)
         {
-            return _matchUrl == url;
+            string key = _useQryString ? url + qry : url;
+            return _matchUrl == key;
         }
     }
 }

@@ -11,14 +11,16 @@ namespace Nop.Plugin.Misc.AdvRedirect.Rules
     {
         private Regex _regex;
         private string _redirectUrl;
+        private bool _useQryString;
 
-        public RegexRule(string pattern, string redirectUrl)
+        public RegexRule(string pattern, string redirectUrl, bool useQryString)
         {
             _redirectUrl = redirectUrl;
             _regex = new Regex(pattern);
+            _useQryString = useQryString;
         }
 
-
+        public bool UseQueryString { get; }
         public string RedirectUrl
         {
             get
@@ -27,9 +29,10 @@ namespace Nop.Plugin.Misc.AdvRedirect.Rules
             }
         }
 
-        public bool Match(string url)
+        public bool Match(string url, string qry)
         {
-            return _regex.Match(url).Success;
+            string key = _useQryString ? url + qry : url;
+            return _regex.Match(key).Success;
         }
     }
 }

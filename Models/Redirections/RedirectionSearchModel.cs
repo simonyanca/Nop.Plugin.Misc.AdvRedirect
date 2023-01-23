@@ -9,25 +9,27 @@ namespace Nop.Plugin.Misc.AdvRedirect.Models.Redirections
 {
     public record RedirectionSearchModel : BaseSearchModel
     {
+        public string Pattern { get; set; }
+        public string RedirectUrl { get; set; }
         public ColumnOptions[] Columns { get; set; }
-        public Order[] order { get; set; }
+        public Order[] Order { get; set; }
     }
 
     public class ColumnOptions
     {
-        public string data { get; set; }
-        public string name { get; set; }
+        public string Data { get; set; }
+        public string Name { get; set; }
 
-        public bool searchable { get; set; }
+        public bool Searchable { get; set; }
 
-        public bool orderable { get; set; }
+        public bool Orderable { get; set; }
 
     }
 
     public class Order
     {
-        public int column { get; set; }
-        public string dir { get; set; }
+        public int Column { get; set; }
+        public string Dir { get; set; }
     }
 
 }

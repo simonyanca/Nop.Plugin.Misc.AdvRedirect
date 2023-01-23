@@ -1,67 +1,99 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using DocumentFormat.OpenXml.Office2021.DocumentTasks;
 using LinqToDB;
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
-using Nop.Core.Caching;
-using Nop.Plugin.Misc.AdvRedirect.Entity;
+using Nop.Data;
+using Nop.Plugin.Misc.AdvRedirect.Domain;
 using Nop.Plugin.Misc.AdvRedirect.Models;
 using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Plugin.Misc.AdvRedirect.Rules;
+using Microsoft.IdentityModel.Tokens;
+using Nop.Core.Caching;
+using Nop.Services.Catalog;
+
 
 namespace Nop.Plugin.Misc.AdvRedirect.Services
 {
-    public class RedirectionsService
+    public class RedirectionsService : IRedirectionsService
     {
+        private readonly IRepository<RedirectionRule> _redirectionRuleEntityRepository;
         private readonly IStaticCacheManager _staticCacheManager;
-        private readonly CacheKey _rulesCacheKey;
-        private static List<RedirectionRuleEntity> _data = GetData().Result.ToList();
+        private readonly IStoreContext _storeContext;
 
-        private RulesModel _rules
-        {
-            get
-            {
-                return _staticCacheManager.Get(_rulesCacheKey, () =>
-                    new RulesModel()
-                    {
-                        Match = _data.Where(r => r.Type == RedirectionTypeEnum.Match).ToDictionary(r => r.Pattern, r => r.RedirectUrl),
-                        Rules = _data.Where(r => r.Type == RedirectionTypeEnum.RegularExpresion).Select(r => (IRule)(new RegexRule(r.Pattern, r.RedirectUrl))).ToList()
-                    });
-            }
-        }
-        
-        private async static Task<IEnumerable<RedirectionRuleEntity>> GetData()
-        {
-            string json = await System.IO.File.ReadAllTextAsync("redirections.json");
-            return JsonSerializer.Deserialize<IEnumerable<RedirectionRuleEntity>>(json);
-        }
 
-        public RedirectionsService(IStaticCacheManager staticCacheManager, IStoreContext storeContext)
+
+        public RedirectionsService( IRepository<RedirectionRule> redirectionRuleEntityRepository, IStaticCacheManager staticCacheManager, IStoreContext storeContext)
         {
+            _redirectionRuleEntityRepository = redirectionRuleEntityRepository;
             _staticCacheManager = staticCacheManager;
-            var storeId = storeContext.GetActiveStoreScopeConfigurationAsync().Result;
-            _rulesCacheKey = staticCacheManager.PrepareKeyForDefaultCache(new CacheKey(AdvRedirectDefaults.CacheKeyString + "-Rules"), storeId);
+            _storeContext = storeContext;
+        }
+
+        private async Task<IEnumerable<IRule>> GetAllRulesAsync()
+        {
+            var store = await _storeContext.GetCurrentStoreAsync();
+            CacheKey key = _staticCacheManager.PrepareKeyForDefaultCache(AdvRedirectDefaults.RedirectionsRulesCacheKey, store);
+
+            var data = await _staticCacheManager.GetAsync<IEnumerable<IRule>>(key, async () =>
+            {
+                var data = await _redirectionRuleEntityRepository.Table
+                .Where(r => r.StoreId == store.Id)
+                .ToListAsync();
+
+                IEnumerable<IRule> rules = data.Select(r =>
+                {
+                    switch ((RedirectionTypeEnum)r.Type)
+                    {
+                        case RedirectionTypeEnum.Match:
+                            return (IRule)new MatchRule(r.Pattern, r.RedirectUrl, r.UseQueryString);
+                        case RedirectionTypeEnum.RegularExpresion:
+                            return (IRule)new RegexRule(r.Pattern, r.RedirectUrl, r.UseQueryString);
+                    }
+                    return null;
+                });
+
+                return rules;
+            });
+
+            return data;
         }
 
 
-        public async Task<IEnumerable<RedirectionRuleEntity>> GetAsync(RedirectionSearchModel model)
+        public async Task<IPagedList<RedirectionRule>> GetAllRedirectionsAsync(RedirectionSearchModel searchModel)
         {
-            var qry = await GetData();
-            return qry;
+            var store = await _storeContext.GetCurrentStoreAsync();
+            var qry = _redirectionRuleEntityRepository.Table.Where(r => r.StoreId == store.Id);
+
+            if (!searchModel.Pattern.IsNullOrEmpty()) qry = qry.Where(r => r.Pattern.Contains(searchModel.Pattern));
+            if (!searchModel.RedirectUrl.IsNullOrEmpty()) qry = qry.Where(r => r.RedirectUrl.Contains(searchModel.RedirectUrl));
+
+            string colName = searchModel.Columns[searchModel.Order[0].Column].Data;
+
+            if(colName == nameof(RedirectionRule.Pattern)) 
+                qry = searchModel.Order[0].Dir == "asc"? qry.OrderBy(r => r.Pattern) : qry.OrderByDescending(r => r.Pattern);
+            else if (colName == nameof(RedirectionRule.RedirectUrl))
+                qry = searchModel.Order[0].Dir == "asc" ? qry.OrderBy(r => r.RedirectUrl) : qry.OrderByDescending(r => r.RedirectUrl);
+            else if (colName == nameof(RedirectionRule.Id))
+                qry = searchModel.Order[0].Dir == "asc" ? qry.OrderBy(r => r.Id) : qry.OrderByDescending(r => r.Id);
+            else if (colName == nameof(RedirectionRule.Type))
+                qry = searchModel.Order[0].Dir == "asc" ? qry.OrderBy(r => r.Type) : qry.OrderByDescending(r => r.Type);
+            else if (colName == nameof(RedirectionRule.UseQueryString))
+                qry = searchModel.Order[0].Dir == "asc" ? qry.OrderBy(r => r.UseQueryString) : qry.OrderByDescending(r => r.UseQueryString);
+
+            var records = new PagedList<RedirectionRule>(await qry.ToListAsync(), searchModel.Page-1, searchModel.PageSize);
+
+            return records;
         }
 
-        public string ResolveRedirection(string url)
+        public async Task<string> ResolveRedirection(HttpRequest request)
         {
-            string redirectUrl;
-            
-            if (_rules.Match.TryGetValue(url, out redirectUrl))
-                return redirectUrl;
+            var rules = await GetAllRulesAsync();
 
-            IRule rule = _rules.Rules.FirstOrDefault(r => r.Match(url));
+            IRule rule = rules.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
             if (rule != null)
                 return rule.RedirectUrl;
 
@@ -85,12 +117,20 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
             return true;
         }
 
-        public async Task<string> AddRedirectionRuleAsync(RedirectionRuleEntity ent)
+
+        public virtual async void DeleteRedirectionAsync(RedirectionRule ent)
         {
-            switch(ent.Type)
+            var item = _redirectionRuleEntityRepository.Table.First(r => r.Id == ent.Id);
+            await _redirectionRuleEntityRepository.DeleteAsync(item);
+        }
+
+        public async Task<string> InsertRedirectionsAsync(RedirectionRule ent)
+        { 
+            switch ((RedirectionTypeEnum)ent.Type)
             {
                 case RedirectionTypeEnum.Match:
-                    if (_data.Any(r => r.Type == RedirectionTypeEnum.Match && r.Pattern == ent.Pattern))
+                    var store = await _storeContext.GetCurrentStoreAsync();
+                    if (_redirectionRuleEntityRepository.Table.Any(r => r.StoreId == store.Id && r.Type == (int)RedirectionTypeEnum.Match && r.Pattern == ent.Pattern))
                         return "Redirección ya existe";
 
                     if (!ent.RedirectUrl.StartsWith("/"))
@@ -102,24 +142,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
                     break;
             }
 
-            ent.Id = _data.Any() ? _data.Max(r => r.Id) + 1 : 1;
-            _data.Add(ent);
+            ent.UseQueryString = ent.Type == (int)RedirectionTypeEnum.Match && ent.Pattern.Contains("?") ? true : ent.UseQueryString;
+            await _redirectionRuleEntityRepository.InsertAsync(ent);
             
-            await _staticCacheManager.RemoveAsync(_rulesCacheKey);
             return null;
         }
 
-        public async void RemoveRedirection(int id)
-        {
-            var item = _data.First(r => r.Id == id);
-            _data.Remove(item);
-            await _staticCacheManager.RemoveAsync(_rulesCacheKey);
-        }
-
-        public async void SaveAsync()
-        {
-            string json = JsonSerializer.Serialize(_data);
-            await System.IO.File.WriteAllTextAsync("redirections.json", json);
-        }
     }
 }

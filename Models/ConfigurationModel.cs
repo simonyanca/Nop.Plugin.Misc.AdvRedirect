@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using DocumentFormat.OpenXml.Office.CoverPageProps;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Web.Framework.Models;
@@ -23,5 +24,9 @@ namespace Nop.Plugin.Misc.AdvRedirect.Models
         public RedirectionModel AddRedirection { get; set; }
 
         public IList<SelectListItem> AvailableTypes { get; set; }
+
+        public string Pattern { get; set; }
+
+        public string RedirectUrl { get; set; }
     }
 }

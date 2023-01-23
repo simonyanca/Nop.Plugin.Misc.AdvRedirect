@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Nop.Core.Infrastructure.Mapper;
-using Nop.Plugin.Misc.AdvRedirect.Entity;
+using Nop.Plugin.Misc.AdvRedirect.Domain;
 using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure.Mapper
@@ -14,8 +14,8 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure.Mapper
 
         public MapperConfiguration()
         {
-            CreateMap<RedirectionModel, RedirectionRuleEntity>();
-            CreateMap<RedirectionRuleEntity, RedirectionModel>();
+            CreateMap<RedirectionModel, RedirectionRule>();
+            CreateMap<RedirectionRule, RedirectionModel>();
         }
 
         #endregion

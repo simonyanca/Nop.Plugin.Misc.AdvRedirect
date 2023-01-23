@@ -17,14 +17,15 @@ using System.Threading.Tasks;
 using Nop.Core.Domain.Messages;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Tax.Avalara.Models.Log;
-using Nop.Plugin.Misc.AdvRedirect.Entity;
+using Nop.Plugin.Misc.AdvRedirect.Extensions;
+using Nop.Plugin.Misc.AdvRedirect.Domain;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {
     [AutoValidateAntiforgeryToken]
     public class AdvRedirectController : BasePluginController
     {
-        private readonly INotificationService _notificationService;
 
         #region Fields
         private readonly RedirectionsService _redirectionsService;
@@ -32,10 +33,9 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 
         #region Ctor
 
-        public AdvRedirectController(RedirectionsService redirectionsService, INotificationService notificationService)
+        public AdvRedirectController(RedirectionsService redirectionsService)
         {
             _redirectionsService = redirectionsService;
-            _notificationService = notificationService;
         }
 
         #endregion
@@ -48,19 +48,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
         [HttpPost, ActionName("GetRedirections")]
         public async Task<IActionResult> GetRedirections(RedirectionSearchModel searchModel)
         {
-            var data = (await _redirectionsService.GetAsync(searchModel)).AsQueryable();
+            var data =  (await _redirectionsService.GetAllRedirectionsAsync(searchModel));
 
-            if(searchModel.order.Any())
-                if (searchModel.order[0].dir == "asc")
-                    data = data.OrderBy(a => a.GetType().GetProperty(searchModel.Columns[searchModel.order[0].column].data).GetValue(a, null));
-                else
-                    data = data.OrderByDescending(a => a.GetType().GetProperty(searchModel.Columns[searchModel.order[0].column].data).GetValue(a, null));
-
-            var paged = await data.ToPagedListAsync(searchModel.Page - 1, searchModel.PageSize);
-
-            var model = new RedirectionsListModel().PrepareToGrid(searchModel, paged,  () =>
+            var model = new RedirectionsListModel().PrepareToGrid(searchModel, data,  () =>
             {
-                return paged.Select(l => l.ToModel<RedirectionModel>());
+                return data.Select(l => l.ToModel<RedirectionModel>());
             });
 
             return Json(model);
@@ -75,11 +67,10 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
         {
             if (!ModelState.IsValid)
                 return ErrorJson(ModelState.SerializeErrors());
-            string errors = await _redirectionsService.AddRedirectionRuleAsync(model.ToEntity<RedirectionRuleEntity>());
+            
+            string errors = await _redirectionsService.InsertRedirectionsAsync(model.ToEntity<RedirectionRule>());
             if (!errors.IsNullOrEmpty())
                 return ErrorJson($"{errors}");
-            else
-                _redirectionsService.SaveAsync();
 
             return Json(new { Result = errors.IsNullOrEmpty() });
         }
@@ -107,8 +98,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
         [HttpPost, ActionName("RedirectRemove")]
         public IActionResult RedirectRemove(RedirectionModel model)
         {
-            _redirectionsService.RemoveRedirection(model.Id);
-            _redirectionsService.SaveAsync();
+            _redirectionsService.DeleteRedirectionAsync(model.ToEntity<RedirectionRule>());
             return Json(new { Result = true });
         }
 

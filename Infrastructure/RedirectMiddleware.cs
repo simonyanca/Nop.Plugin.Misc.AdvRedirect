@@ -71,7 +71,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         {
             if (context.Request.Method == "GET" )
             {
-                string redirectUrl = _redirectionService.ResolveRedirection(context.Request.Path.Value + context.Request.QueryString);
+                string redirectUrl = await _redirectionService.ResolveRedirection(context.Request);
                 if (!redirectUrl.IsNullOrEmpty())
                 {
                     var parsed = HttpUtility.UrlEncode(redirectUrl);

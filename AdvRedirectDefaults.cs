@@ -14,7 +14,7 @@ namespace Nop.Plugin.Misc.AdvRedirect
         /// </summary>
         public static string SystemName => "Misc.AdvRedirect";
 
-        public static string CacheKeyString => "Nop.Plugin.Misc.AdvRedirect.Configurations";
-
+        public const string RedirectionsRulesStringKey = "Nop.Plugin.Misc.AdvRedirect.Redirections.Rules";
+        public static CacheKey RedirectionsRulesCacheKey => new(RedirectionsRulesStringKey);
     }
 }
