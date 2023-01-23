@@ -19,6 +19,7 @@ using Nop.Plugin.Misc.AdvRedirect.Models;
 using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Plugin.Misc.AdvRedirect.Services;
 using Nop.Services.Configuration;
+using Nop.Services.Logging;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
 {
@@ -36,17 +37,18 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
 
         private readonly RedirectionsService _redirectionService;
         private readonly RequestDelegate _next;
-        
-        
+        private readonly ILogger _logger;
+
         #endregion
 
         #region Ctor
 
-        public RedirectMiddleware(IAuthenticationSchemeProvider schemes,  RedirectionsService redirectionService, RequestDelegate next)
+        public RedirectMiddleware(IAuthenticationSchemeProvider schemes, ILogger logger, RedirectionsService redirectionService, RequestDelegate next)
         {
             Schemes = schemes ?? throw new ArgumentNullException(nameof(schemes));
             _next = next ?? throw new ArgumentNullException(nameof(next));
             _redirectionService = redirectionService;
+            _logger = logger;
         }
 
         #endregion
@@ -69,19 +71,26 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         /// <returns>A task that represents the asynchronous operation</returns>
         public async Task InvokeAsync(HttpContext context)
         {
-            if (context.Request.Method == "GET" )
+            try
             {
-                string redirectUrl = await _redirectionService.ResolveRedirection(context.Request);
-                if (!redirectUrl.IsNullOrEmpty())
+                if (context.Request.Method == "GET")
                 {
-                    var parsed = HttpUtility.UrlEncode(redirectUrl);
-                    if (parsed.StartsWith("%2f"))
-                        parsed = "/" + parsed.Substring(3);
+                    string redirectUrl = await _redirectionService.ResolveRedirection(context.Request);
+                    if (!redirectUrl.IsNullOrEmpty())
+                    {
+                        var parsed = HttpUtility.UrlEncode(redirectUrl);
+                        if (parsed.StartsWith("%2f"))
+                            parsed = "/" + parsed.Substring(3);
 
-                    context.Request.Path = parsed;
-                    context.Response.Redirect(parsed, true);
+                        context.Request.Path = parsed;
+                        context.Response.Redirect(parsed, true);
+                    }
                 }
+            }catch(Exception ex)
+            {
+                _logger.Error("AdvRedirect", ex);
             }
+            
 
             await _next(context);
         }

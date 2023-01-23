@@ -91,11 +91,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
 
         public async Task<string> ResolveRedirection(HttpRequest request)
         {
-            var rules = await GetAllRulesAsync();
+            //var rules = await GetAllRulesAsync();
 
-            IRule rule = rules.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
-            if (rule != null)
-                return rule.RedirectUrl;
+            //IRule rule = rules.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
+            //if (rule != null)
+            //    return rule.RedirectUrl;
 
             return null;
         }
