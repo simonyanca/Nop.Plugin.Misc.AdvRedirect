@@ -2,8 +2,8 @@
   {
     "Type": "Plugin",
     "SupportedVersion": "4.20",
-    "DirectoryPath": "Nop.Plugin.Misc.CodeInjector/",
-    "SystemName": "Misc.CodeInjector",
-    "SourceDirectoryPath": "Nop.Plugin.Misc.CodeInjector/"
+    "DirectoryPath": "Nop.Plugin.Misc.AdvRedirect/",
+    "SystemName": "Misc.AdvRedirect",
+    "SourceDirectoryPath": "Nop.Plugin.Misc.AdvRedirect/"
   }
 ]

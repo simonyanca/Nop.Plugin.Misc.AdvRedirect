@@ -1,11 +1,11 @@
 ﻿{
   "Group": "Misc",
-  "FriendlyName": "CodeInjector",
-  "SystemName": "Misc.CodeInjector",
+  "FriendlyName": "AdvRedirect",
+  "SystemName": "Misc.AdvRedirect",
   "Version": "1.0",
   "SupportedVersions": [ "4.60" ],
   "Author": "Gerardo Tous",
   "DisplayOrder": 1,
-  "FileName": "Nop.Plugin.Misc.CodeInjector.dll",
-  "Description": "Agregate custom html/javascript code in your website"
+  "FileName": "Nop.Plugin.Misc.AdvRedirect.dll",
+  "Description": "Advanced url redirections"
 }
