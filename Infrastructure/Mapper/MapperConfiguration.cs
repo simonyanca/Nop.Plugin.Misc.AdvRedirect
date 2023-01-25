@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
 using Nop.Core.Infrastructure.Mapper;
-using Nop.Plugin.Misc.AdvRedirect.Domain;
-using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
+using Nop.Plugin.Misc.CodeInjector.Models;
+using Nop.Plugin.Misc.CodeInjector.Services;
 
-namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure.Mapper
+namespace Nop.Plugin.Misc.CodeInjector.Infrastructure.Mapper
 {
     /// <summary>
     /// Represents AutoMapper configuration for plugin models
@@ -14,8 +14,8 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure.Mapper
 
         public MapperConfiguration()
         {
-            CreateMap<RedirectionModel, RedirectionRule>();
-            CreateMap<RedirectionRule, RedirectionModel>();
+            CreateMap<CodeToInject, CodeToInjectDTO>();
+            CreateMap<CodeToInjectDTO, CodeToInject>();
         }
 
         #endregion

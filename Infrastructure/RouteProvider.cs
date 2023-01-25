@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Nop.Web.Framework.Mvc.Routing;
 
-namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
+namespace Nop.Plugin.Misc.CodeInjector.Infrastructure
 {
     /// <summary>
     /// Represents plugin route provider
@@ -16,12 +16,12 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         /// <param name="endpointRouteBuilder">Route builder</param>
         public void RegisterRoutes(IEndpointRouteBuilder endpointRouteBuilder)
         {
-            endpointRouteBuilder.MapControllerRoute("Redirections", "Admin/AdvRedirect/GetRedirections/",
-            new { controller = "AdvRedirect", action = "GetRedirections" });
-            endpointRouteBuilder.MapControllerRoute("Redirections", "Admin/AdvRedirect/RedirectUpdate/",
-            new { controller = "AdvRedirect", action = "RedirectUpdate" });
-            endpointRouteBuilder.MapControllerRoute("Redirections", "Admin/AdvRedirect/RedirectRemove/",
-            new { controller = "AdvRedirect", action = "RedirectRemove" });
+            endpointRouteBuilder.MapControllerRoute("Redirections", "Admin/CodeInjector/GetRedirections/",
+            new { controller = "CodeInjector", action = "GetRedirections" });
+            endpointRouteBuilder.MapControllerRoute("Redirections", "Admin/CodeInjector/RedirectUpdate/",
+            new { controller = "CodeInjector", action = "RedirectUpdate" });
+            endpointRouteBuilder.MapControllerRoute("Redirections", "Admin/CodeInjector/RedirectRemove/",
+            new { controller = "CodeInjector", action = "RedirectRemove" });
 
         }
 

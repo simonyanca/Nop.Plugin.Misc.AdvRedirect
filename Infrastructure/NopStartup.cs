@@ -1,12 +1,11 @@
-﻿using System.Linq;
+﻿
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Nop.Core.Infrastructure;
-using Nop.Plugin.Misc.AdvRedirect.Services;
-using Nop.Services.Authentication;
+using Nop.Plugin.Misc.CodeInjector.Services;
 
-namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
+namespace Nop.Plugin.Misc.CodeInjector.Infrastructure
 {
 
     public class NopStartup : INopStartup
@@ -15,13 +14,13 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
 
         public void Configure(IApplicationBuilder application)
         {
-            application.UseCustomRedirect();
+            //application.UseCustomRedirect();
         }
 
         
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<RedirectionsService>();
+            services.AddScoped<CodeInjectorService>();
         }
     }
 }
