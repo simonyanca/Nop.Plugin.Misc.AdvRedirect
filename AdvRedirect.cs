@@ -11,7 +11,7 @@ using Nop.Services.Plugins;
 
 
 namespace Nop.Plugin.Misc.AdvRedirect
-{   
+{   //test advrediredt
     public class AdvRedirect : BasePlugin, IMiscPlugin, IWidgetPlugin
     {
         private readonly IWebHelper _webHelper;
