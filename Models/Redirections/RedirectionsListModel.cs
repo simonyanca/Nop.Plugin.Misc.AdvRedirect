@@ -1,7 +1,6 @@
-﻿using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
-using Nop.Web.Framework.Models;
+﻿using Nop.Web.Framework.Models;
 
-namespace Nop.Plugin.Tax.Avalara.Models.Log
+namespace Nop.Plugin.Misc.AdvRedirect.Models.Redirections
 {
     /// <summary>
     /// Represents a tax transaction log list model

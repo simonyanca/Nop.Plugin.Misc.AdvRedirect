@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,19 +8,13 @@ using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
 using Nop.Plugin.Misc.AdvRedirect.Services;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
-using Nop.Web.Framework.Models.DataTables;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Mvc.ModelBinding;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
-using Nop.Services.Messages;
 using Microsoft.IdentityModel.Tokens;
 using System.Threading.Tasks;
-using Nop.Core.Domain.Messages;
 using Nop.Web.Framework.Models.Extensions;
-using Nop.Plugin.Tax.Avalara.Models.Log;
-using Nop.Plugin.Misc.AdvRedirect.Extensions;
 using Nop.Plugin.Misc.AdvRedirect.Domain;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {
