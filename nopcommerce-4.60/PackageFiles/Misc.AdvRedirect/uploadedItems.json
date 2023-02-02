@@ -1,0 +1,9 @@
+﻿[
+  {
+    "Type": "Plugin",
+    "SupportedVersion": "4.60",
+    "DirectoryPath": "AdvRedirect/nopCommerce-4.60/Misc.AdvRedirect/",
+    "SystemName": "Misc.AdvRedirect",
+    "SourceDirectoryPath": "AdvRedirect/nopCommerce-4.60/Nop.Plugin.Misc.AdvRedirect/"
+  }
+]
