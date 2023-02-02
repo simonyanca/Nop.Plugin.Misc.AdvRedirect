@@ -32,11 +32,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -53,6 +49,10 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Presentation\Nop.Web\Nop.Web.csproj" />
   </ItemGroup>
 
 
