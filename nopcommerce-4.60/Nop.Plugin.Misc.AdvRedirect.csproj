@@ -32,7 +32,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" />
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -52,7 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
+    <ProjectReference Include="..\..\..\..\nopCommerce-release-4.60\src\Presentation\Nop.Web\Nop.Web.csproj" />
   </ItemGroup>
 
 

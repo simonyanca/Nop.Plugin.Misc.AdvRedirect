@@ -18,7 +18,7 @@ namespace Nop.Plugin.Misc.AdvRedirect
         private readonly ILocalizationService _localizationService;
         private readonly WidgetSettings _widgetSettings;
         private readonly ISettingService _settingService;
-
+         
         public bool HideInWidgetList => true;
 
         public AdvRedirect(  IWebHelper webHelper, ILocalizationService localizationService, WidgetSettings widgetSettings, ISettingService settingService)
