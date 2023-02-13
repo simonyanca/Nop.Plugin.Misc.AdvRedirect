@@ -5,7 +5,7 @@
     <Copyright>Copyright ©, Ltd</Copyright>
     <Authors>Gerardo Tous</Authors>
     <PackageLicenseUrl></PackageLicenseUrl>
-	<OutputPath>..\..\..\nopCommerce-release-4.60\Presentation\Nop.Web\Plugins\Misc.AdvRedirect</OutputPath>
+	<OutputPath>..\..\Presentation\Nop.Web\Plugins\Misc.AdvRedirect</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -32,11 +32,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\nopCommerce-release-4.60\Build\ClearPluginAssemblies.proj" />
+    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
-	
-	<!--E:\Fuentes\nopcommerce\nopCommerce-release-4.60\Build\ClearPluginAssemblies.proj-->
-	
+
   <ItemGroup>
     <Content Include="logo.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

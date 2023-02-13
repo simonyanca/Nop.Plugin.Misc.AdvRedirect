@@ -32,10 +32,8 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\nopCommerce-release-4.60\Build\ClearPluginAssemblies.proj" />
+    <ClearPluginAssemblies Include="E:\Fuentes\nopcommerce\nopCommerce-release-4.60\Build\ClearPluginAssemblies.proj" />
   </ItemGroup>
-	
-	<!--E:\Fuentes\nopcommerce\nopCommerce-release-4.60\Build\ClearPluginAssemblies.proj-->
 	
   <ItemGroup>
     <Content Include="logo.jpg">
