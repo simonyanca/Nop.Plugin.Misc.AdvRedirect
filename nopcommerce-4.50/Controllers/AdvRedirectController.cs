@@ -10,11 +10,11 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Mvc.ModelBinding;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System.Threading.Tasks;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.AdvRedirect.Domain;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {

@@ -5,7 +5,7 @@
     <Copyright>Copyright ©, Ltd</Copyright>
     <Authors>Gerardo Tous</Authors>
     <PackageLicenseUrl></PackageLicenseUrl>
-    <OutputPath>..\..\Presentation\Nop.Web\Plugins\Misc.AdvRedirect</OutputPath>
+	  <OutputPath>..\..\..\nopCommerce-release-4.50.4\Presentation\Nop.Web\Plugins\Misc.AdvRedirect</OutputPath>
     <OutDir>$(OutputPath)</OutDir>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -30,10 +30,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  
-  <ItemGroup>
-    <ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\Build\ClearPluginAssemblies.proj" />
-  </ItemGroup>
+
+	<ItemGroup>
+		<ClearPluginAssemblies Include="$(MSBuildProjectDirectory)\..\..\..\nopCommerce-release-4.50.4\Build\ClearPluginAssemblies.proj" />
+	</ItemGroup>
 
   <ItemGroup>
     <Content Include="logo.jpg">
@@ -51,9 +51,9 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\..\Presentation\Nop.Web\Nop.Web.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\nopCommerce-release-4.50.4\Presentation\Nop.Web\Nop.Web.csproj" />
+	</ItemGroup>
 
 
   <!-- This target execute after "Build" target -->
