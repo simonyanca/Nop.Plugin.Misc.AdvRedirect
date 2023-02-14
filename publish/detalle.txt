@@ -1,0 +1,20 @@
+AdvRedirect ofrece la posibilidad de redirigir direcciones web de tu sitio web de una manera sencilla. 
+Se podrán realizar redirecciones de dos maneras, usando expresiones regulares o directamente indicando una coincidencia.
+Las expresiones regulares podrás interceptar cualquier tipo de petición y crear una redirección a otra url de la manera más óptima. 
+
+Características:
+    - Configuración facil
+    - Instalación rápida
+
+Instrucciones de instalación:
+    - Descarga del plugin del archivo.
+    - Ir a admin area > Configuración > plugins locales.
+    - Subir el plugin usando la opción "Cargar plugin o tema". 
+    - Hacer scroll através de la lista de plugins hasta encontrar el nuevo plugin instalado. 
+    - Hacer click en el botón "Instalar" para iniciar la instalación del plugin.
+
+
+***********************************************************************
+
+	
+https://github.com/G3r4rd00/Nop.Plugin.Misc.AdvRedirect
