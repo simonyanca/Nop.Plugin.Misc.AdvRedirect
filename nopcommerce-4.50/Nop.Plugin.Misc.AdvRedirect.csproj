@@ -10,8 +10,11 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Migrations\**" />
     <Compile Remove="PackageFiles\**" />
+    <EmbeddedResource Remove="Migrations\**" />
     <EmbeddedResource Remove="PackageFiles\**" />
+    <None Remove="Migrations\**" />
     <None Remove="PackageFiles\**" />
   </ItemGroup>
 
@@ -45,10 +48,6 @@
     <Content Include="Views\_ViewImports.cshtml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Migrations\" />
   </ItemGroup>
 
 	<ItemGroup>
