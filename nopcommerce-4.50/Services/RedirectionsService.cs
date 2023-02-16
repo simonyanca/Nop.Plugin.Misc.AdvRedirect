@@ -14,7 +14,7 @@ using Nop.Plugin.Misc.AdvRedirect.Rules;
 using Microsoft.IdentityModel.Tokens;
 using Nop.Core.Caching;
 using Nop.Services.Catalog;
-
+using Nop.Web.Framework.Models.Extensions;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Services
 {
@@ -33,30 +33,22 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
             _storeContext = storeContext;
         }
 
-        private async Task<IEnumerable<IRule>> GetAllRulesAsync()
+        private async Task<(Dictionary<string,string> mach, Dictionary<string,string> qryMach, IEnumerable<IRule> regex)> GetAllRulesAsync()
         {
             var store = await _storeContext.GetCurrentStoreAsync();
             CacheKey key = _staticCacheManager.PrepareKeyForDefaultCache(AdvRedirectDefaults.RedirectionsRulesCacheKey, store);
 
-            var data = await _staticCacheManager.GetAsync<IEnumerable<IRule>>(key, async () =>
+            var data = await _staticCacheManager.GetAsync<(Dictionary<string, string>, Dictionary<string, string>, IEnumerable<IRule>)>(key, async () =>
             {
                 var data = await _redirectionRuleEntityRepository.Table
                 .Where(r => r.StoreId == store.Id)
                 .ToListAsync();
 
-                IEnumerable<IRule> rules = data.Select(r =>
-                {
-                    switch ((RedirectionTypeEnum)r.Type)
-                    {
-                        case RedirectionTypeEnum.Match:
-                            return (IRule)new MatchRule(r.Pattern, r.RedirectUrl, r.UseQueryString);
-                        case RedirectionTypeEnum.RegularExpresion:
-                            return (IRule)new RegexRule(r.Pattern, r.RedirectUrl, r.UseQueryString);
-                    }
-                    return null;
-                });
+                Dictionary<string, string> mach = data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.Match && !r.UseQueryString).ToDictionary(r => r.Pattern, r => r.RedirectUrl);
+				Dictionary<string, string> qryMach = data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.Match && r.UseQueryString).ToDictionary(r => r.Pattern, r => r.RedirectUrl);
+				IEnumerable<IRule> regex = await data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.RegularExpresion).Select(r => (IRule)new RegexRule(r.Pattern, r.RedirectUrl, r.UseQueryString)).ToListAsync();
 
-                return rules;
+                return (mach, qryMach, regex);
             });
 
             return data;
@@ -93,7 +85,14 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
         {
             var rules = await GetAllRulesAsync();
 
-            IRule rule = rules.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
+            string redirectUrl = "";
+			if (rules.qryMach.TryGetValue(request.Path + request.QueryString.ToString(), out redirectUrl))
+				return redirectUrl;
+
+			if (rules.mach.TryGetValue(request.Path, out redirectUrl))
+                return redirectUrl;
+
+			IRule rule = rules.regex.FirstOrDefault(r => r.Match(request.Path, request.QueryString.ToString()));
             if (rule != null)
                 return rule.RedirectUrl;
 
@@ -127,15 +126,18 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
         public async Task<string> InsertRedirectionsAsync(RedirectionRule ent)
         {
             var store = await _storeContext.GetCurrentStoreAsync();
-            switch ((RedirectionTypeEnum)ent.Type)
+            ent.Pattern = ent.Pattern.Trim();
+            
+			switch ((RedirectionTypeEnum)ent.Type)
             {
                 case RedirectionTypeEnum.Match:
                     
-                    if (_redirectionRuleEntityRepository.Table.Any(r => r.StoreId == store.Id && r.Type == (int)RedirectionTypeEnum.Match && r.Pattern == ent.Pattern))
+                    if (_redirectionRuleEntityRepository.Table.Any(r => r.StoreId == store.Id && r.Pattern == ent.Pattern))
                         return "Redirección ya existe";
 
                     if (!ent.RedirectUrl.StartsWith("/"))
                         ent.RedirectUrl = "/" + ent.RedirectUrl;
+
                     break;
                 case RedirectionTypeEnum.RegularExpresion:
                     if (!IsValidRegex(ent.Pattern))
