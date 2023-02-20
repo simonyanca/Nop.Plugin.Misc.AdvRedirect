@@ -15,6 +15,10 @@ using System.Threading.Tasks;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.AdvRedirect.Domain;
 using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using System.Text;
+using Nop.Core;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {
@@ -23,14 +27,16 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
     {
 
         #region Fields
-        private readonly RedirectionsService _redirectionsService;
-        #endregion
+        private readonly IRedirectionsService _redirectionsService;
+		private readonly IDataIOService _dataIOService;
+		#endregion
 
-        #region Ctor
+		#region Ctor
 
-        public AdvRedirectController(RedirectionsService redirectionsService)
+		public AdvRedirectController(IRedirectionsService redirectionsService, IDataIOService dataIOService)
         {
             _redirectionsService = redirectionsService;
+            _dataIOService = dataIOService;
         }
 
         #endregion
@@ -87,8 +93,35 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
             return View("~/Plugins/Misc.AdvRedirect/Views/Configure.cshtml", model); 
         }
 
-
         [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost, ActionName("Import")]
+        public async Task<IActionResult> ImportAsync(IFormFile importexcelfile)
+        {
+			var csvText = new StringBuilder();
+			using (var reader = new StreamReader(importexcelfile.OpenReadStream()))
+			{
+				while (reader.Peek() >= 0)
+					csvText.AppendLine(await reader.ReadLineAsync());
+			}
+
+            _dataIOService.Import(csvText.ToString());
+
+            return Configure();
+		}
+
+		[AuthorizeAdmin]
+		[Area(AreaNames.Admin)]
+		[HttpGet, ActionName("Export")]
+		public async Task<IActionResult> ExportAsync()
+		{
+            string csv = await _dataIOService.Export();
+			byte[] bytes = Encoding.UTF8.GetBytes(csv,0, csv.Length);
+			return File(bytes, MimeTypes.TextCsv, "export.csv");
+		}
+
+
+		[AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost, ActionName("RedirectRemove")]
         public IActionResult RedirectRemove(RedirectionModel model)

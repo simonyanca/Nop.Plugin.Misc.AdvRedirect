@@ -1,4 +1,4 @@
-﻿@using Nop.Plugin.Misc.AdvRedirect.Models.Redirections;
+﻿@using Nop.Plugin.Misc.AdvRedirect.Models.Redirections
 @using Nop.Web.Framework.Models.DataTables
 @model ConfigurationModel
 @{
@@ -33,9 +33,59 @@
 </script>
 
 
+@*import products form*@
+<div id="importexcel-window" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="importexcel-window-title">
+	<div class="modal-dialog">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromCsv")</h4>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+			</div>
+			<form asp-controller="AdvRedirect" asp-action="Import" method="post" enctype="multipart/form-data">
+				<div class="form-horizontal">
+					<div class="modal-body">
+						<div class="form-group row">
+							<div class="col-md-2">
+								<div class="label-wrapper">
+									<label class="col-form-label">
+										@T("Admin.Common.CsvFile")
+									</label>
+								</div>
+							</div>
+							<div class="col-md-10">
+								<input type="file" id="importexcelfile" name="importexcelfile" class="form-control" />
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer">
+						<button type="submit" class="btn btn-primary">
+							@T("Admin.Common.ImportFromCsv")
+						</button>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
 <div class="cards-group">
 	<div class="content-header clearfix">
 		<div class="float-right">
+			<a asp-action="export" class="btn btn-primary">
+				<i class="fas fa-download"></i>
+				@T("Admin.Common.AddNew")
+			</a>
+			@*<a class="btn btn-primary" href="/admin/advredirect/export"> 
+				<i class="fas fa-download"></i>
+				@T("Admin.Common.Export")
+			</a>*@
+
+			<button type="button" name="importexcel" class="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
+				<i class="fas fa-upload"></i>
+				@T("Admin.Common.Import")
+			</button>
+			
+
 			<a onclick="HideShow()" class="btn btn-primary">
 				<i class="fas fa-plus-square"></i>
 				@T("Admin.Common.AddNew")
@@ -233,3 +283,5 @@
         }
     }
 })
+
+

@@ -16,7 +16,10 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure.Mapper
         {
             CreateMap<RedirectionModel, RedirectionRule>();
             CreateMap<RedirectionRule, RedirectionModel>();
-        }
+
+			CreateMap<RedirectionCSVModel, RedirectionModel>();
+			CreateMap<RedirectionRule, RedirectionCSVModel>();
+		}
 
         #endregion
 

@@ -1,14 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using Nop.Web.Framework.Models;
 using System.ComponentModel.DataAnnotations;
-using CsvHelper.Configuration.Attributes;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Nop.Web.Framework.Models;
-using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Models.Redirections
-{
-    public record RedirectionModel : BaseNopEntityModel
-    {
+{ 
+    public record RedirectionCSVModel 
+	{
+
 		[Required]
         [DataType(DataType.Url)]
         public string Pattern { get; set; }
