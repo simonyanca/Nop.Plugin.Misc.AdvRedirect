@@ -10,11 +10,17 @@ using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
 using Nop.Web.Framework.Mvc.ModelBinding;
-using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
 using Microsoft.IdentityModel.Tokens;
 using System.Threading.Tasks;
 using Nop.Web.Framework.Models.Extensions;
 using Nop.Plugin.Misc.AdvRedirect.Domain;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using System.Text;
+using Nop.Core;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+using Nop.Plugin.Misc.AdvRedirect.Enums;
+using Nop.Services.Messages;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {
@@ -23,15 +29,19 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
     {
 
         #region Fields
-        private readonly RedirectionsService _redirectionsService;
-        #endregion
+        private readonly IRedirectionsService _redirectionsService;
+		private readonly IDataIOService _dataIOService;
+		private readonly INotificationService _notificationService;
+		#endregion
 
-        #region Ctor
+		#region Ctor
 
-        public AdvRedirectController(RedirectionsService redirectionsService)
+		public AdvRedirectController(IRedirectionsService redirectionsService, IDataIOService dataIOService, INotificationService notificationService)
         {
             _redirectionsService = redirectionsService;
-        }
+            _dataIOService = dataIOService;
+            _notificationService = notificationService;
+	    }
 
         #endregion
 
@@ -63,11 +73,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
             if (!ModelState.IsValid)
                 return ErrorJson(ModelState.SerializeErrors());
             
-            string errors = await _redirectionsService.InsertRedirectionsAsync(model.ToEntity<RedirectionRule>());
-            if (!string.IsNullOrEmpty(errors))
-                return ErrorJson($"{errors}");
+            InsertRedirectionResult result = await _redirectionsService.InsertRedirectionsAsync(model.ToEntity<RedirectionRule>());
+            if (result != InsertRedirectionResult.OK)
+                return ErrorJson($"{result}");
 
-            return Json(new { Result = string.IsNullOrEmpty(errors) });
+            return Json(new { Result = true });
         }
 
         [AuthorizeAdmin]
@@ -87,8 +97,58 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
             return View("~/Plugins/Misc.AdvRedirect/Views/Configure.cshtml", model); 
         }
 
-
         [AuthorizeAdmin]
+        [Area(AreaNames.Admin)]
+        [HttpPost, ActionName("Import")]
+        public async Task<IActionResult> ImportAsync(IFormFile importexcelfile)
+        {
+			var csvText = new StringBuilder();
+			using (var reader = new StreamReader(importexcelfile.OpenReadStream()))
+			{
+				while (reader.Peek() >= 0)
+					csvText.AppendLine(await reader.ReadLineAsync());
+			}
+
+            var erros = await _dataIOService.Import(csvText.ToString());
+
+            foreach(var er in erros)
+            {
+                switch(er.result)
+                {
+                    case InsertRedirectionResult.CSVNotValid:
+                        _notificationService.ErrorNotification("CSV not valid");
+                        break;
+					case InsertRedirectionResult.Exist:
+						_notificationService.ErrorNotification($"Error in line {er.line}: Match exist");
+                        break;
+					case InsertRedirectionResult.RegularExpressionNotValid:
+						_notificationService.ErrorNotification($"Error in line {er.line}: Invalid regular expresion");
+						break;
+					case InsertRedirectionResult.Error:
+						_notificationService.ErrorNotification($"Error");
+						break;
+				}
+            }
+
+            if (!erros.Any())
+                _notificationService.Notification(NotifyType.Success, "OK");
+				
+
+			return Configure();
+		}
+
+		[AuthorizeAdmin]
+		[Area(AreaNames.Admin)]
+		[HttpGet, ActionName("Export")]
+		public async Task<IActionResult> ExportAsync()
+		{
+            string csv = await _dataIOService.Export();
+			byte[] bytes = Encoding.UTF8.GetBytes(csv,0, csv.Length);
+			return File(bytes, MimeTypes.TextCsv, "export.csv");
+		}
+
+
+		[AuthorizeAdmin]
         [Area(AreaNames.Admin)]
         [HttpPost, ActionName("RedirectRemove")]
         public IActionResult RedirectRemove(RedirectionModel model)

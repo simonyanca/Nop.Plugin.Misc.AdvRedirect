@@ -10,8 +10,11 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Migrations\**" />
     <Compile Remove="PackageFiles\**" />
+    <EmbeddedResource Remove="Migrations\**" />
     <EmbeddedResource Remove="PackageFiles\**" />
+    <None Remove="Migrations\**" />
     <None Remove="PackageFiles\**" />
   </ItemGroup>
 
@@ -48,7 +51,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Migrations\" />
+    <PackageReference Include="CsvHelper" Version="30.0.1" />
   </ItemGroup>
 
 	<ItemGroup>
