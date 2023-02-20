@@ -21,7 +21,8 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
         
         public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
         {
-            services.AddScoped<RedirectionsService>();
-        }
+            services.AddScoped<IRedirectionsService, RedirectionsService>();
+			services.AddScoped<IDataIOService,DataIOService>();
+		}
     }
 }

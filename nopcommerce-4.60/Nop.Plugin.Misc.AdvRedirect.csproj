@@ -54,6 +54,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="30.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\nopCommerce-release-4.60\Presentation\Nop.Web\Nop.Web.csproj" />
   </ItemGroup>
 

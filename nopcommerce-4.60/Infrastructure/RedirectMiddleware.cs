@@ -35,7 +35,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
     {
         #region Fields
 
-        private readonly RedirectionsService _redirectionService;
+        private readonly IRedirectionsService _redirectionService;
         private readonly RequestDelegate _next;
         private readonly ILogger _logger;
 
@@ -43,7 +43,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Infrastructure
 
         #region Ctor
 
-        public RedirectMiddleware(IAuthenticationSchemeProvider schemes, ILogger logger, RedirectionsService redirectionService, RequestDelegate next)
+        public RedirectMiddleware(IAuthenticationSchemeProvider schemes, ILogger logger, IRedirectionsService redirectionService, RequestDelegate next)
         {
             Schemes = schemes ?? throw new ArgumentNullException(nameof(schemes));
             _next = next ?? throw new ArgumentNullException(nameof(next));
