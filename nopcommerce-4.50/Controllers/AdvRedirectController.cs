@@ -19,6 +19,8 @@ using System.Text;
 using Nop.Core;
 using Microsoft.AspNetCore.Http;
 using System.IO;
+using Nop.Plugin.Misc.AdvRedirect.Enums;
+using Nop.Services.Messages;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 {
@@ -29,15 +31,17 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
         #region Fields
         private readonly IRedirectionsService _redirectionsService;
 		private readonly IDataIOService _dataIOService;
+		private readonly INotificationService _notificationService;
 		#endregion
 
 		#region Ctor
 
-		public AdvRedirectController(IRedirectionsService redirectionsService, IDataIOService dataIOService)
+		public AdvRedirectController(IRedirectionsService redirectionsService, IDataIOService dataIOService, INotificationService notificationService)
         {
             _redirectionsService = redirectionsService;
             _dataIOService = dataIOService;
-        }
+            _notificationService = notificationService;
+	    }
 
         #endregion
 
@@ -69,11 +73,11 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
             if (!ModelState.IsValid)
                 return ErrorJson(ModelState.SerializeErrors());
             
-            string errors = await _redirectionsService.InsertRedirectionsAsync(model.ToEntity<RedirectionRule>());
-            if (!string.IsNullOrEmpty(errors))
-                return ErrorJson($"{errors}");
+            InsertRedirectionResult result = await _redirectionsService.InsertRedirectionsAsync(model.ToEntity<RedirectionRule>());
+            if (result != InsertRedirectionResult.OK)
+                return ErrorJson($"{result}");
 
-            return Json(new { Result = string.IsNullOrEmpty(errors) });
+            return Json(new { Result = true });
         }
 
         [AuthorizeAdmin]
@@ -105,9 +109,32 @@ namespace Nop.Plugin.Misc.AdvRedirect.Controllers
 					csvText.AppendLine(await reader.ReadLineAsync());
 			}
 
-            _dataIOService.Import(csvText.ToString());
+            var erros = await _dataIOService.Import(csvText.ToString());
 
-            return Configure();
+            foreach(var er in erros)
+            {
+                switch(er.result)
+                {
+                    case InsertRedirectionResult.CSVNotValid:
+                        _notificationService.ErrorNotification("CSV not valid");
+                        break;
+					case InsertRedirectionResult.Exist:
+						_notificationService.ErrorNotification($"Error in line {er.line}: Match exist");
+                        break;
+					case InsertRedirectionResult.RegularExpressionNotValid:
+						_notificationService.ErrorNotification($"Error in line {er.line}: Invalid regular expresion");
+						break;
+					case InsertRedirectionResult.Error:
+						_notificationService.ErrorNotification($"Error");
+						break;
+				}
+            }
+
+            if (!erros.Any())
+                _notificationService.Notification(NotifyType.Success, "OK");
+				
+
+			return Configure();
 		}
 
 		[AuthorizeAdmin]

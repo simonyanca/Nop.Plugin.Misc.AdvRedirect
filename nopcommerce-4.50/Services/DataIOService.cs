@@ -22,6 +22,7 @@ using System.Globalization;
 using Nop.Core.Infrastructure.Mapper;
 using System.IO;
 using CsvHelper;
+using Nop.Plugin.Misc.AdvRedirect.Enums;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Services
 {
@@ -50,17 +51,23 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
 			return data.ToCsv(_csvConf);
 		}
 
-		public void Import(string csvText)
+		public async Task<List<(int line, InsertRedirectionResult result)>> Import(string csvText)
 		{
+			List<(int line, InsertRedirectionResult result)> errors = new List<(int line, InsertRedirectionResult result)>();
 			IEnumerable<RedirectionCSVModel> records;
 			using (var reader = new StringReader(csvText))
-				using (var csvReader = new CsvReader(reader, _csvConf, false))
-					records = csvReader.GetRecords<RedirectionCSVModel>();
-			
-			foreach (var r in records)
+			using (var csvReader = new CsvReader(reader, _csvConf, false))
+				records = csvReader.GetRecords<RedirectionCSVModel>().ToList();
+
+			var redirections = records.Select(r => AutoMapperConfiguration.Mapper.Map<RedirectionRule>(r)).ToArray();
+			for(int x =0; x < redirections.Length; x++)
 			{
-				_service.InsertRedirectionsAsync(AutoMapperConfiguration.Mapper.Map<RedirectionRule>(r));
+				var result = await _service.InsertRedirectionsAsync(redirections[x]);
+				if (result != InsertRedirectionResult.OK)
+					errors.Add((x, result));
 			}
+			
+			return errors;
 		}
 	}
 }

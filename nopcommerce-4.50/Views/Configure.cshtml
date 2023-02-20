@@ -38,7 +38,9 @@
 	<div class="modal-dialog">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h4 class="modal-title" id="importexcel-window-title">@T("Admin.Common.ImportFromCsv")</h4>
+				<h4 class="modal-title" id="importexcel-window-title">
+					@T("Admin.Common.ExportFromCsv")
+				</h4>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
 			</div>
 			<form asp-controller="AdvRedirect" asp-action="Import" method="post" enctype="multipart/form-data">
@@ -73,13 +75,9 @@
 		<div class="float-right">
 			<a asp-action="export" class="btn btn-primary">
 				<i class="fas fa-download"></i>
-				@T("Admin.Common.AddNew")
-			</a>
-			@*<a class="btn btn-primary" href="/admin/advredirect/export"> 
-				<i class="fas fa-download"></i>
 				@T("Admin.Common.Export")
-			</a>*@
-
+			</a>
+			
 			<button type="button" name="importexcel" class="btn bg-olive" data-toggle="modal" data-target="#importexcel-window">
 				<i class="fas fa-upload"></i>
 				@T("Admin.Common.Import")

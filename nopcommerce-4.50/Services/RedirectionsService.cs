@@ -15,6 +15,9 @@ using Microsoft.IdentityModel.Tokens;
 using Nop.Core.Caching;
 using Nop.Services.Catalog;
 using Nop.Web.Framework.Models.Extensions;
+using Nop.Plugin.Misc.AdvRedirect.Enums;
+using Nop.Services.Logging;
+using Nop.Core.Domain.Logging;
 
 namespace Nop.Plugin.Misc.AdvRedirect.Services
 {
@@ -23,14 +26,15 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
         private readonly IRepository<RedirectionRule> _redirectionRuleEntityRepository;
         private readonly IStaticCacheManager _staticCacheManager;
         private readonly IStoreContext _storeContext;
+		private readonly ILogger _logger;
 
 
-
-        public RedirectionsService( IRepository<RedirectionRule> redirectionRuleEntityRepository, IStaticCacheManager staticCacheManager, IStoreContext storeContext)
+		public RedirectionsService( IRepository<RedirectionRule> redirectionRuleEntityRepository, IStaticCacheManager staticCacheManager, IStoreContext storeContext, ILogger logger)
         {
             _redirectionRuleEntityRepository = redirectionRuleEntityRepository;
             _staticCacheManager = staticCacheManager;
             _storeContext = storeContext;
+            _logger = logger;
         }
 
         private async Task<(Dictionary<string,string> mach, Dictionary<string,string> qryMach, IEnumerable<IRule> regex)> GetAllRulesAsync()
@@ -40,15 +44,27 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
 
             var data = await _staticCacheManager.GetAsync<(Dictionary<string, string>, Dictionary<string, string>, IEnumerable<IRule>)>(key, async () =>
             {
-                var data = await _redirectionRuleEntityRepository.Table
-                .Where(r => r.StoreId == store.Id)
-                .ToListAsync();
+				Dictionary<string, string> mach = new Dictionary<string, string>();
+				Dictionary<string, string> qryMach = new Dictionary<string, string>();
+				IEnumerable<IRule> regex = new List<IRule>();
 
-                Dictionary<string, string> mach = data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.Match && !r.UseQueryString).ToDictionary(r => r.Pattern, r => r.RedirectUrl);
-				Dictionary<string, string> qryMach = data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.Match && r.UseQueryString).ToDictionary(r => r.Pattern, r => r.RedirectUrl);
-				IEnumerable<IRule> regex = await data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.RegularExpresion).Select(r => (IRule)new RegexRule(r.Pattern, r.RedirectUrl, r.UseQueryString)).ToListAsync();
+                try
+                {
+					var data = await _redirectionRuleEntityRepository.Table
+				    .Where(r => r.StoreId == store.Id)
+				    .ToListAsync();
 
-                return (mach, qryMach, regex);
+					mach = data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.Match && !r.UseQueryString).ToDictionary(r => r.Pattern, r => r.RedirectUrl);
+					qryMach = data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.Match && r.UseQueryString).ToDictionary(r => r.Pattern, r => r.RedirectUrl);
+					regex = await data.Where(r => (RedirectionTypeEnum)r.Type == RedirectionTypeEnum.RegularExpresion).Select(r => (IRule)new RegexRule(r.Pattern, r.RedirectUrl, r.UseQueryString)).ToListAsync();
+
+				}catch(Exception ex)
+                {
+                   await _logger.ErrorAsync("Error loading redirections", ex);
+                }
+				
+
+				return (mach, qryMach, regex);
             });
 
             return data;
@@ -123,7 +139,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
             await _redirectionRuleEntityRepository.DeleteAsync(item);
         }
 
-        public async Task<string> InsertRedirectionsAsync(RedirectionRule ent)
+        public async Task<InsertRedirectionResult> InsertRedirectionsAsync(RedirectionRule ent)
         {
             var store = await _storeContext.GetCurrentStoreAsync();
             ent.Pattern = ent.Pattern.Trim();
@@ -131,9 +147,9 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
 			switch ((RedirectionTypeEnum)ent.Type)
             {
                 case RedirectionTypeEnum.Match:
-                    
-                    if (_redirectionRuleEntityRepository.Table.Any(r => r.StoreId == store.Id && r.Pattern == ent.Pattern))
-                        return "Redirección ya existe";
+
+                    if (_redirectionRuleEntityRepository.Table.Any(r => r.StoreId == store.Id && r.Pattern == ent.Pattern && r.Type == (int)RedirectionTypeEnum.Match))
+                        return InsertRedirectionResult.Exist;
 
                     if (!ent.RedirectUrl.StartsWith("/"))
                         ent.RedirectUrl = "/" + ent.RedirectUrl;
@@ -141,7 +157,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
                     break;
                 case RedirectionTypeEnum.RegularExpresion:
                     if (!IsValidRegex(ent.Pattern))
-                        return "Expresión regular no válida";
+                        return InsertRedirectionResult.RegularExpressionNotValid;
                     break;
             }
 
@@ -149,7 +165,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Services
             ent.StoreId = store.Id;
             await _redirectionRuleEntityRepository.InsertAsync(ent);
             
-            return null;
+            return  InsertRedirectionResult.OK;
         }
 
     }

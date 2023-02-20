@@ -18,7 +18,7 @@ namespace Nop.Plugin.Misc.AdvRedirect.Models.Redirections
 
 
         [Required]
-        public RedirectionTypeEnum Type { get; set; }
+		public RedirectionTypeEnum Type { get; set; }
 
 
     }
